@@ -9,19 +9,19 @@ public class Rot : MonoBehaviour
 	public float rotSpeed=20;
 	public float radius=100;
 	public int rows=3;
+	public bool keepRatio=true;
 
 	// float width;
 	// float height;
 	float ratio;
 
 	public GameObject imgTemp;
-	SpriteRenderer spriteR;
 	List<Transform> images= new List<Transform>();
 
     // Start is called before the first frame update
     void Start()
     {
-    	spriteR= imgTemp.GetComponent<SpriteRenderer>();
+    	var spriteR= imgTemp.GetComponent<SpriteRenderer>();
     	ratio= spriteR.size.x/spriteR.size.y;
     	var sprites= Resources.LoadAll<Sprite>(picPath);
         for(int i=0;i<sprites.Length;++i)
@@ -94,14 +94,14 @@ public class Rot : MonoBehaviour
     		float longiU= Mathf.PI*2/n;
     		for(int j=0;j<n;++j)
     		{
-    			images[idx].localPosition= PointBySphere(lati,longiU*j,radius,spriteR.size.x,spriteR.size.y);
+    			images[idx].localPosition= PointBySphere(lati,longiU*j,radius,width,width/ratio);
     			++idx;
     		}
     		if(i!=0 || rows%2==0)
     		{
 	    		for(int j=0;j<n && idx<images.Count;++j)
 	    		{
-	    			images[idx].localPosition= PointBySphere(-lati,longiU*j,radius,spriteR.size.x,spriteR.size.y);
+	    			images[idx].localPosition= PointBySphere(-lati,longiU*j,radius,width,width/ratio);
 	    			++idx;
 	    		}
     		}
@@ -109,13 +109,17 @@ public class Rot : MonoBehaviour
     	for(int k=0;k<images.Count;++k)
     	{
     		images[k].localRotation= Quaternion.LookRotation(images[k].localPosition);
-    		images[k].GetComponent<SpriteRenderer>().size=new Vector2(width,width/ratio);
+    		var sr= images[k].GetComponent<SpriteRenderer>();
+    		sr.size=new Vector2(width,width/(keepRatio? sr.sprite.rect.width/sr.sprite.rect.height: ratio));
     	}
     }
 
     Vector3 PointBySphere(float lati, float longi, float radius, float width, float height)
     {
     	Vector3 pos;
+    	width /=2;
+    	height /=2;
+    	radius= Mathf.Sqrt(radius*radius-width*width-height*height);
     	pos.y= radius*Mathf.Sin(lati);
     	float r= LatiRadius(radius,lati);
     	pos.x= r*Mathf.Sin(longi);
